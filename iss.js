@@ -33,4 +33,32 @@ const fetchMyIP = function(callback) {
   });
 };
 
-module.exports = { fetchMyIP };
+
+const fetchCoordsByIP = function(ip, callback) {
+  needle.get(`http://ipwho.is/${ip}`, (error, response, body) => {
+    // general purpose error catching.
+    if (error) {
+      callback(error, null);
+      return;
+    }
+    // does innate behavior but makes code more readable.
+    if (response === 200) {
+      body.success = true;
+    }
+
+    // replaces the need to use resonse === 200 indicating success used for data integrity.
+    if (!body.success) {
+      const message = `Success status was ${body.success}. Server message says: ${body.message} when fetching for IP ${body.ip}`;
+      callback(Error(message), null);
+      return;
+    }
+    //creating easy object access terminology
+    const latitude = body.latitude;
+    const longitude = body.longitude;
+    callback(null, {latitude, longitude});
+  });
+};
+
+// Don't need to export the other function since we are not testing it right now.
+module.exports = { fetchCoordsByIP, fetchMyIP };
+
