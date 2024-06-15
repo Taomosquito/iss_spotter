@@ -1,14 +1,5 @@
 const needle = require('needle');
 
-/**
- * Orchestrates multiple API requests in order to determine the next 5 upcoming ISS fly overs for the user's current location.
- * Input:
- *   - A callback with an error or results.
- * Returns (via Callback):
- *   - An error, if any (nullable)
- *   - The fly-over times as an array (null if error):
- *     [ { risetime: <number>, duration: <number> }, ... ]
- */
 const nextISSTimesForMyLocation = function(callback) {
   // format requires the understanding your borrowing the logic that was originally calling each from index.js
   // (template logic is commented out)
@@ -36,9 +27,7 @@ const nextISSTimesForMyLocation = function(callback) {
 const fetchMyIP = function(callback) {
   needle.get('https://api.ipify.org?format=json', (error, response, body) => {
     if (error) {
-      // catching general purpose errors first.
       callback(error, null);
-      // the below return seems odd in an  async setting but it is to let the if function as a filter.
       return;
     }
 
@@ -48,7 +37,6 @@ const fetchMyIP = function(callback) {
     if (response.statusCode !== 200) {
       const msg = `Status Code ${response.statusCode} when fetching IP: ${body}`;
       callback(Error(msg), null);
-      // the below return seems odd in an  async setting but it is to let the if function as a filter.
       return;
     }
 
@@ -61,14 +49,12 @@ const fetchMyIP = function(callback) {
 
 const fetchCoordsByIP = function(ip, callback) {
   needle.get(`http://ipwho.is/${ip}`, (error, response, body) => {
-    // general purpose error catching.
     if (error) {
       callback(error, null);
-      // the below return seems odd in an  async setting but it is to let the if function as a filter.
       return;
     }
     // does innate behavior but makes code more readable.
-    if (response === 200) {
+    if (response.statusCode === 200) {
       body.success = true;
     }
 
@@ -76,7 +62,6 @@ const fetchCoordsByIP = function(ip, callback) {
     if (!body.success) {
       const message = `Success status was ${body.success}. Server message says: ${body.message} when fetching for IP ${body.ip}`;
       callback(Error(message), null);
-      // the below return seems odd in an  async setting but it is to let the if function as a filter.
       return;
     }
     //creating easy object access terminology
@@ -92,10 +77,8 @@ const fetchISSFlyOverTimes = function(coords, callback) {
   const latitude = coords.latitude;
   const url = `https://iss-flyover.herokuapp.com/json/?lat=${latitude}&lon=${longitude}`;
   needle.get(url, (error, response, body) => {
-  // general purpose error catching
     if (error) {
       callback(error, null);
-      // the below return seems odd in an  async setting but it is to let the if function as a filter.
       return;
     }
     // important as it can still give the required data
@@ -104,10 +87,8 @@ const fetchISSFlyOverTimes = function(coords, callback) {
     if (response.statusCode !== 200) {
       const msg = `Status Code ${response.statusCode} when fetching data: ${body}`;
       callback(Error(msg), null);
-      // the below return seems odd in an  async setting but it is to let the if function as a filter.
       return;
     }
-    // returns the entire unaltered json object as unclear how this should be manipulated yet.
     const passes = body.response;
     callback(null, passes);
   });
