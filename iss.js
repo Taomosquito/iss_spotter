@@ -1,5 +1,38 @@
 const needle = require('needle');
 
+/**
+ * Orchestrates multiple API requests in order to determine the next 5 upcoming ISS fly overs for the user's current location.
+ * Input:
+ *   - A callback with an error or results.
+ * Returns (via Callback):
+ *   - An error, if any (nullable)
+ *   - The fly-over times as an array (null if error):
+ *     [ { risetime: <number>, duration: <number> }, ... ]
+ */
+const nextISSTimesForMyLocation = function(callback) {
+  // format requires the understanding your borrowing the logic that was originally calling each from index.js
+  // (template logic is commented out)
+  fetchMyIP((error, IP) => {
+    if (error) {
+      console.log("It didn't work! ", error);
+      return callback(error, null);
+    }
+    fetchCoordsByIP(IP,(error, coords) => {
+      if (error) {
+        console.log("It didn't work! ", error);
+        return callback(error, null);
+      }
+      fetchISSFlyOverTimes(coords, (error, nextPassList) => {
+        if (error) {
+          console.log("It didn't work! ", error);
+          return callback(error, null);
+        }
+        callback(null, nextPassList);
+      });
+    });
+  });
+};
+
 const fetchMyIP = function(callback) {
   needle.get('https://api.ipify.org?format=json', (error, response, body) => {
     if (error) {
@@ -81,5 +114,5 @@ const fetchISSFlyOverTimes = function(coords, callback) {
 };
 
 // Don't need to export the other function since we are not testing it right now.
-module.exports = { fetchCoordsByIP, fetchMyIP, fetchISSFlyOverTimes };
+module.exports = { fetchCoordsByIP, fetchMyIP, fetchISSFlyOverTimes, nextISSTimesForMyLocation };
 
