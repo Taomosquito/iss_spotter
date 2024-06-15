@@ -1,12 +1,4 @@
 const needle = require('needle');
-/**
- * Makes a single API request to retrieve the user's IP address.
- * Input:
- *   - A callback (to pass back an error or the IP string)
- * Returns (via Callback):
- *   - An error, if any (nullable)
- *   - The IP address as a string (null if error). Example: "162.245.144.188"
- */
 
 const fetchMyIP = function(callback) {
   needle.get('https://api.ipify.org?format=json', (error, response, body) => {
@@ -39,6 +31,7 @@ const fetchCoordsByIP = function(ip, callback) {
     // general purpose error catching.
     if (error) {
       callback(error, null);
+      // the below return seems odd in an  async setting but it is to let the if function as a filter.
       return;
     }
     // does innate behavior but makes code more readable.
@@ -50,6 +43,7 @@ const fetchCoordsByIP = function(ip, callback) {
     if (!body.success) {
       const message = `Success status was ${body.success}. Server message says: ${body.message} when fetching for IP ${body.ip}`;
       callback(Error(message), null);
+      // the below return seems odd in an  async setting but it is to let the if function as a filter.
       return;
     }
     //creating easy object access terminology
@@ -59,6 +53,33 @@ const fetchCoordsByIP = function(ip, callback) {
   });
 };
 
+
+const fetchISSFlyOverTimes = function(coords, callback) {
+  const longitude = coords.longitude;
+  const latitude = coords.latitude;
+  const url = `https://iss-flyover.herokuapp.com/json/?lat=${latitude}&lon=${longitude}`;
+  needle.get(url, (error, response, body) => {
+  // general purpose error catching
+    if (error) {
+      callback(error, null);
+      // the below return seems odd in an  async setting but it is to let the if function as a filter.
+      return;
+    }
+    // important as it can still give the required data
+    // with an error code and this verifies data integrity.
+    // (This  also happens to future proof code.)
+    if (response.statusCode !== 200) {
+      const msg = `Status Code ${response.statusCode} when fetching data: ${body}`;
+      callback(Error(msg), null);
+      // the below return seems odd in an  async setting but it is to let the if function as a filter.
+      return;
+    }
+    // returns the entire unaltered json object as unclear how this should be manipulated yet.
+    const passes = body.response;
+    callback(null, passes);
+  });
+};
+
 // Don't need to export the other function since we are not testing it right now.
-module.exports = { fetchCoordsByIP, fetchMyIP };
+module.exports = { fetchCoordsByIP, fetchMyIP, fetchISSFlyOverTimes };
 
